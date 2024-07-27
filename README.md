@@ -11,3 +11,4 @@ https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/
 
 ### Sections
 - [Section 6](https://github.com/agung-learns/udemy-docker-kubernetes/tree/feature/section-6)
+- [Section 7](https://github.com/agung-learns/udemy-docker-kubernetes/tree/feature/section-7)
