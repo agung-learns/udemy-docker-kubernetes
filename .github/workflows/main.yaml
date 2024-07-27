@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - feature/*
+      - main
   pull_request:
     branches:
       - feature/*
+      - main
 
 jobs:
   deploy:
@@ -22,3 +24,14 @@ jobs:
       - name: 'Test'
         run: |
           docker run -e CI=true agung96tm/frontend npm run test -- --coverage
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v22
+#        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/feature/section-7'
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: frontend
+          environment_name: Frontend-env
+#          version_label: 12345
+          region: ap-southeast-1
