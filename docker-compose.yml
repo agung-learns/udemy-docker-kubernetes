@@ -1,0 +1,59 @@
+version: '3'
+
+services:
+  db:
+    container_name: "deployable-db"
+    image: postgres:16.2-alpine
+    environment:
+      - POSTGRES_USER=deploy_user
+      - POSTGRES_PASSWORD=deploy_password
+      - POSTGRES_DB=deploy_db
+    volumes:
+      - deployable-db-data:/var/libs/postgresql/data/
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7.2.4-alpine
+    ports:
+      - "6379:6379"
+#    expose:
+#      - "6379"
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    volumes:
+      - /app/node_modules
+      - ./server:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PGUSER=deploy_user
+      - PGHOST=db
+      - PGPORT=5432
+      - PGDATABASE=deploy_db
+      - PGPASSWORD=deploy_password
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    volumes:
+      - /app/node_modules
+      - ./client:/app
+
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile.dev
+    volumes:
+      - /app/node_modules
+      - ./worker:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+volumes:
+  deployable-db: {}
