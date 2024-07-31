@@ -69,4 +69,4 @@ services:
       - REDIS_PORT=6379
 
 volumes:
-  deployable-db: {}
+  deployable-db-data: {}

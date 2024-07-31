@@ -1,0 +1,30 @@
+name: "CI"
+on:
+  pull_request:
+  push:
+    branches:
+      - "feature/section-10"
+
+jobs:
+  tests:
+    name: "Integration testing"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: "Build for Test"
+        run: docker build -t agung96tm/react-test -f ./client/Dockerfile.dev ./client
+      - name: "Test React"
+        run: docker run -e CI=true agung96tm/react-test npm test -- --coverage
+      - name: "Build for Deployment"
+        run: |
+          docker build -t agung96tm/multi-client ./client
+          docker build -t agung96tm/multi-nginx ./nginx
+          docker build -t agung96tm/multi-server ./server
+          docker build -t agung96tm/multi-worker ./worker
+          
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+          docker push agung96tm/multi-client
+          docker push agung96tm/multi-nginx
+          docker push agung96tm/multi-server
+          docker push agung96tm/multi-worker
