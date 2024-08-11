@@ -3,7 +3,8 @@ on:
   pull_request:
   push:
     branches:
-      - "feature/section-16"
+      - main
+#      - "feature/section-17"
 
 env:
   SHA: ${{ github.sha }}

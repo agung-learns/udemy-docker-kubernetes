@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+
+kind: Certificate
+metadata:
+  name: learn-com-tls
+spec:
+  secretName: learn-com
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: learn.com
+  dnsNames:
+    - learn.com
+    - www.learn.com
