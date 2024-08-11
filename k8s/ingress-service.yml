@@ -1,4 +1,4 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress-service
@@ -15,7 +15,8 @@ spec:
             backend:
               service:
                 name: client-service
-                port: 3000
+                port:
+                  number: 3000
           - path: /api/?(.*)
             pathType: ImplementationSpecific
             backend:
