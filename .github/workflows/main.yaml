@@ -3,51 +3,60 @@ on:
   pull_request:
   push:
     branches:
-      - "feature/section-10"
+      - "feature/section-16"
+
+env:
+  SHA: ${{ github.sha }}
+  GKE_CLUSTER: deploy-learn
+  GKE_ZONE: asia-southeast1-b
 
 jobs:
-  tests:
+  build_push:
     name: "Integration testing"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: "Build for Test"
         run: docker build -t agung96tm/react-test -f ./client/Dockerfile.dev ./client
+
       - name: "Test React"
         run: docker run -e CI=true agung96tm/react-test npm test -- --coverage
-      - name: "Build for Deployment"
-        run: |
-          docker build -t agung96tm/multi-client ./client
-          docker build -t agung96tm/multi-nginx ./nginx
-          docker build -t agung96tm/multi-server ./server
-          docker build -t agung96tm/multi-worker ./worker
-          
+
       - name: "Login to Docker Hub"
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_ID }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: "Push Docker Images"
-        run: |
-          docker push agung96tm/multi-client
-          docker push agung96tm/multi-nginx
-          docker push agung96tm/multi-server
-          docker push agung96tm/multi-worker
+      - name: "Build & Push"
+        run: build_push.sh
+        env:
+          SHA: ${{ env.SHA }}
 
-      - name: Generate deployment package
-        run: zip -r deploy.zip . -x '*.git*'
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [ build_push ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Deploy to EB
-        uses: einaregilsson/beanstalk-deploy@v22
-        #  if: github.ref == 'refs/heads/main'
-        if: github.ref == 'refs/heads/feature/section-7'
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
         with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: frontend
-          environment_name: Frontend-env
-          version_label: ${{ github.sha }}
-          deployment_package: deploy.zip
-          region: ap-southeast-1
-          use_existing_version_if_available: true
+          # Service Account with Permissions:
+          # * Kubernetes Engine Developer
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+      - name: 'Set up GKE credentials'
+        uses: 'google-github-actions/get-gke-credentials@v2'
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GKE_ZONE }}
+
+      - name: 'Deploy to GKE'
+        run: deploy.sh
+        env:
+          SHA: ${{ env.SHA }}
